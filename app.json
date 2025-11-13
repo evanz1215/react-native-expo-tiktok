@@ -1,7 +1,8 @@
 {
   "expo": {
-    "name": "react-navite-expo-tiktok",
-    "slug": "react-navite-expo-tiktok",
+    "name": "react-native-expo-tiktok",
+    "slug": "react-native-expo-tiktok",
+    "scheme": "react-native-expo-tiktok",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -24,7 +25,11 @@
       "predictiveBackGestureEnabled": false
     },
     "web": {
-      "favicon": "./assets/favicon.png"
-    }
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro"
+    },
+    "plugins": [
+      "expo-router"
+    ]
   }
 }
