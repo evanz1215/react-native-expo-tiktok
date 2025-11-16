@@ -1,3 +1,4 @@
+import { Post } from "@/types/types";
 import { Ionicons } from "@expo/vector-icons";
 import { useVideoPlayer, VideoView } from "expo-video";
 import {
@@ -8,21 +9,25 @@ import {
   Text,
 } from "react-native";
 
-const videoSource = {
-  uri: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+type VideoItemProps = {
+  postItem: Post;
 };
 
-export default function PostListItem() {
+export default function PostListItem({ postItem }: VideoItemProps) {
   const { height } = Dimensions.get("window");
-  const player = useVideoPlayer(videoSource, (player) => {
+
+  const { video_url, nrOfComments, nrOfLikes, nrOfShares, description, user } =
+    postItem;
+
+  const player = useVideoPlayer(video_url, (player) => {
     player.loop = true;
-    player.play();
+    // player.play();
   });
 
   return (
     <View
       style={{
-        height: height - 55,
+        height: height - 50,
       }}
     >
       <VideoView
@@ -42,7 +47,7 @@ export default function PostListItem() {
           onPress={() => console.log("Like Pressed")}
         >
           <Ionicons name="heart" size={33} color="#fff" />
-          <Text style={styles.interactionText}>0</Text>
+          <Text style={styles.interactionText}>{nrOfLikes[0]?.count || 0}</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -50,7 +55,9 @@ export default function PostListItem() {
           onPress={() => console.log("Comment Pressed")}
         >
           <Ionicons name="chatbubbles" size={33} color="#fff" />
-          <Text style={styles.interactionText}>0</Text>
+          <Text style={styles.interactionText}>
+            {nrOfComments[0]?.count || 0}
+          </Text>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -58,20 +65,24 @@ export default function PostListItem() {
           onPress={() => console.log("Share Pressed")}
         >
           <Ionicons name="arrow-redo" size={33} color="#fff" />
-          <Text style={styles.interactionText}>20</Text>
+          <Text style={styles.interactionText}>
+            {nrOfShares[0]?.count || 0}
+          </Text>
         </TouchableOpacity>
 
         <TouchableOpacity
           style={styles.avatar}
           onPress={() => console.log("Profile Pressed")}
         >
-          <Text style={styles.avatarText}>A</Text>
+          <Text style={styles.avatarText}>
+            {user?.username.charAt(0).toUpperCase()}
+          </Text>
         </TouchableOpacity>
       </View>
 
       <View style={styles.videoInfo}>
-        <Text style={styles.username}>Abc</Text>
-        <Text style={styles.description}>Hello World!</Text>
+        <Text style={styles.username}>{user.username}</Text>
+        <Text style={styles.description}>{description}</Text>
       </View>
     </View>
   );
