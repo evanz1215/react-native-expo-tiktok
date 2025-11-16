@@ -8,13 +8,20 @@ import {
   View,
   Text,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
+import { useFocusEffect } from "expo-router";
+import { useCallback } from "react";
 
 type VideoItemProps = {
   postItem: Post;
+  isActive: boolean;
 };
 
-export default function PostListItem({ postItem }: VideoItemProps) {
+export default function PostListItem({ postItem, isActive }: VideoItemProps) {
   const { height } = Dimensions.get("window");
+  const insets = useSafeAreaInsets();
+  const tabBarHeight = useBottomTabBarHeight();
 
   const { video_url, nrOfComments, nrOfLikes, nrOfShares, description, user } =
     postItem;
@@ -24,10 +31,38 @@ export default function PostListItem({ postItem }: VideoItemProps) {
     // player.play();
   });
 
+  useFocusEffect(
+    useCallback(() => {
+      if (!player) {
+        return;
+      }
+
+      try {
+        if (isActive) {
+          player.play();
+        }
+      } catch (error) {
+        console.log(error);
+      }
+
+      return () => {
+        try {
+          if (player && isActive) {
+            player.pause();
+          }
+        } catch (error) {
+          console.log(error);
+        }
+      };
+    }, [isActive, player])
+  );
+
+  const containerHeight = height - tabBarHeight - (insets.bottom || 0);
+
   return (
     <View
       style={{
-        height: height - 50,
+        height: containerHeight,
       }}
     >
       <VideoView
@@ -38,7 +73,7 @@ export default function PostListItem({ postItem }: VideoItemProps) {
         allowsFullscreen={false}
         allowsPictureInPicture={false}
         contentFit="cover"
-        nativeControls={false}
+        nativeControls={true}
       />
 
       <View style={styles.interactionBar}>
