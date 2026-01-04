@@ -1,5 +1,10 @@
-import { CameraView, CameraType, useCameraPermissions } from "expo-camera";
-import { useEffect, useState } from "react";
+import {
+  CameraView,
+  CameraType,
+  useCameraPermissions,
+  useMicrophonePermissions,
+} from "expo-camera";
+import { useEffect, useRef, useState } from "react";
 import { View, Text, Button, StyleSheet, TouchableOpacity } from "react-native";
 import * as Linking from "expo-linking";
 import { MaterialIcons, Ionicons } from "@expo/vector-icons";
@@ -7,23 +12,39 @@ import { router } from "expo-router";
 
 export default function NewPostScreen() {
   const [facing, setFacing] = useState<CameraType>("back");
+  const [isRecording, setIsRecording] = useState<boolean>(false);
+  const cameraRef = useRef<CameraView>(null);
   const [permission, requestPermission] = useCameraPermissions();
+  const [micPermission, requestMicPermission] = useMicrophonePermissions();
 
   useEffect(() => {
-    if (permission && !permission.granted && permission.canAskAgain) {
-      requestPermission();
-    }
-  }, [permission]);
+    (async () => {
+      if (permission && !permission.granted && permission.canAskAgain) {
+        await requestPermission();
+      }
 
-  if (!permission) {
+      if (
+        micPermission &&
+        !micPermission.granted &&
+        micPermission.canAskAgain
+      ) {
+        await requestMicPermission();
+      }
+    })();
+  }, [permission, micPermission]);
+
+  if (!permission || !micPermission) {
     return <View />;
   }
 
-  if (permission && !permission.granted && !permission.canAskAgain) {
+  if (
+    (permission && !permission.granted && !permission.canAskAgain) ||
+    (micPermission && !micPermission.granted && !micPermission.canAskAgain)
+  ) {
     return (
       <View style={styles.permissionContainer}>
         <Text style={styles.permissionText}>
-          We need your permission to use the camera
+          We need your permission to use the camera and microphone
         </Text>
         <Button
           title="Grant Permission"
@@ -38,9 +59,28 @@ export default function NewPostScreen() {
 
   const selectFromGallery = () => {};
 
+  const stopRecording = () => {
+    setIsRecording(false);
+    cameraRef.current?.stopRecording();
+  };
+
+  const startRecording = async () => {
+    setIsRecording(true);
+    const recordedVideo = await cameraRef.current?.recordAsync();
+
+    if (recordedVideo?.uri) {
+      console.log(recordedVideo.uri);
+    }
+  };
+
   return (
     <View style={{ flex: 1 }}>
-      <CameraView style={styles.camera} facing={facing} />
+      <CameraView
+        mode="video"
+        ref={cameraRef}
+        style={styles.camera}
+        facing={facing}
+      />
       <View style={styles.tobBar}>
         <Ionicons
           name="close"
@@ -60,8 +100,8 @@ export default function NewPostScreen() {
           onPress={selectFromGallery}
         />
         <TouchableOpacity
-          style={styles.recordButton}
-          onPress={() => console.log("Start")}
+          style={[styles.recordButton, isRecording && styles.recordingButton]}
+          onPress={isRecording ? stopRecording : startRecording}
         />
 
         <Ionicons
@@ -95,6 +135,9 @@ const styles = StyleSheet.create({
     height: 80,
     backgroundColor: "#fff",
     borderRadius: 40,
+  },
+  recordingButton: {
+    backgroundColor: "#F44336",
   },
   tobBar: {
     position: "absolute",
