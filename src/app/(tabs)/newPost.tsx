@@ -1,6 +1,6 @@
 import { CameraView, CameraType, useCameraPermissions } from "expo-camera";
 import { useEffect, useState } from "react";
-import { View, Text, Button, StyleSheet } from "react-native";
+import { View, Text, Button, StyleSheet, TouchableOpacity } from "react-native";
 import * as Linking from "expo-linking";
 import { MaterialIcons, Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
@@ -14,6 +14,10 @@ export default function NewPostScreen() {
       requestPermission();
     }
   }, [permission]);
+
+  if (!permission) {
+    return <View />;
+  }
 
   if (permission && !permission.granted && !permission.canAskAgain) {
     return (
@@ -29,10 +33,15 @@ export default function NewPostScreen() {
     );
   }
 
+  const toggleCamera = () =>
+    setFacing((current) => (current === "back" ? "front" : "back"));
+
+  const selectFromGallery = () => {};
+
   return (
-    <View>
+    <View style={{ flex: 1 }}>
       <CameraView style={styles.camera} facing={facing} />
-      <View>
+      <View style={styles.tobBar}>
         <Ionicons
           name="close"
           size={40}
@@ -40,6 +49,26 @@ export default function NewPostScreen() {
           onPress={() => {
             router.back();
           }}
+        />
+      </View>
+
+      <View style={styles.bottomControls}>
+        <Ionicons
+          name="images"
+          size={40}
+          color="white"
+          onPress={selectFromGallery}
+        />
+        <TouchableOpacity
+          style={styles.recordButton}
+          onPress={() => console.log("Start")}
+        />
+
+        <Ionicons
+          name="camera-reverse"
+          size={40}
+          color="white"
+          onPress={toggleCamera}
         />
       </View>
     </View>
@@ -60,5 +89,24 @@ const styles = StyleSheet.create({
   },
   camera: {
     flex: 1,
+  },
+  recordButton: {
+    width: 80,
+    height: 80,
+    backgroundColor: "#fff",
+    borderRadius: 40,
+  },
+  tobBar: {
+    position: "absolute",
+    top: 50,
+    left: 10,
+  },
+  bottomControls: {
+    position: "absolute",
+    bottom: 20,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-around",
+    width: "100%",
   },
 });
