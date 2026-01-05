@@ -5,17 +5,32 @@ import {
   useMicrophonePermissions,
 } from "expo-camera";
 import { useEffect, useRef, useState } from "react";
-import { View, Text, Button, StyleSheet, TouchableOpacity } from "react-native";
+import {
+  View,
+  Text,
+  Button,
+  StyleSheet,
+  TouchableOpacity,
+  TextInput,
+} from "react-native";
 import * as Linking from "expo-linking";
 import { MaterialIcons, Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
+import { useVideoPlayer, VideoView } from "expo-video";
 
 export default function NewPostScreen() {
   const [facing, setFacing] = useState<CameraType>("back");
   const [isRecording, setIsRecording] = useState<boolean>(false);
+  const [video, setVideo] = useState<string>();
+  const [description, setDescription] = useState<string>("");
+
   const cameraRef = useRef<CameraView>(null);
   const [permission, requestPermission] = useCameraPermissions();
   const [micPermission, requestMicPermission] = useMicrophonePermissions();
+
+  const videoPlayer = useVideoPlayer(null, (player) => {
+    player.loop = true;
+  });
 
   useEffect(() => {
     (async () => {
@@ -59,6 +74,8 @@ export default function NewPostScreen() {
 
   const selectFromGallery = () => {};
 
+  const dismissVideo = () => {};
+
   const stopRecording = () => {
     setIsRecording(false);
     cameraRef.current?.stopRecording();
@@ -73,46 +90,83 @@ export default function NewPostScreen() {
     }
   };
 
-  return (
-    <View style={{ flex: 1 }}>
-      <CameraView
-        mode="video"
-        ref={cameraRef}
-        style={styles.camera}
-        facing={facing}
-      />
-      <View style={styles.tobBar}>
+  const renderCamera = () => {
+    return (
+      <View style={{ flex: 1 }}>
+        <CameraView
+          mode="video"
+          ref={cameraRef}
+          style={styles.camera}
+          facing={facing}
+        />
+        <View style={styles.tobBar}>
+          <Ionicons
+            name="close"
+            size={40}
+            color="white"
+            onPress={() => {
+              router.back();
+            }}
+          />
+        </View>
+
+        <View style={styles.bottomControls}>
+          <Ionicons
+            name="images"
+            size={40}
+            color="white"
+            onPress={selectFromGallery}
+          />
+          <TouchableOpacity
+            style={[styles.recordButton, isRecording && styles.recordingButton]}
+            onPress={isRecording ? stopRecording : startRecording}
+          />
+
+          <Ionicons
+            name="camera-reverse"
+            size={40}
+            color="white"
+            onPress={toggleCamera}
+          />
+        </View>
+      </View>
+    );
+  };
+
+  const renderRecorderVideo = () => {
+    return (
+      <View style={{ flex: 1 }}>
         <Ionicons
           name="close"
-          size={40}
+          size={32}
           color="white"
-          onPress={() => {
-            router.back();
-          }}
-        />
-      </View>
-
-      <View style={styles.bottomControls}>
-        <Ionicons
-          name="images"
-          size={40}
-          color="white"
-          onPress={selectFromGallery}
-        />
-        <TouchableOpacity
-          style={[styles.recordButton, isRecording && styles.recordingButton]}
-          onPress={isRecording ? stopRecording : startRecording}
+          onPress={dismissVideo}
+          style={styles.closeIcon}
         />
 
-        <Ionicons
-          name="camera-reverse"
-          size={40}
-          color="white"
-          onPress={toggleCamera}
+        <View>
+          <VideoView
+            player={videoPlayer}
+            contentFit="cover"
+            style={styles.video}
+          />
+        </View>
+        <TextInput
+          style={styles.input}
+          placeholder="Add a description..."
+          placeholderTextColor="#888"
+          multiline
+          value={description}
+          onChangeText={setDescription}
         />
+        <TouchableOpacity>
+          <Text style={styles.postText}>Post</Text>
+        </TouchableOpacity>
       </View>
-    </View>
-  );
+    );
+  };
+
+  return <>{video ? renderRecorderVideo() : renderCamera()}</>;
 }
 
 const styles = StyleSheet.create({
@@ -152,4 +206,8 @@ const styles = StyleSheet.create({
     justifyContent: "space-around",
     width: "100%",
   },
+  closeIcon: {},
+  video: {},
+  input: {},
+  postText: {},
 });
