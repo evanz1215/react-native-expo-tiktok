@@ -12,11 +12,14 @@ import {
   StyleSheet,
   TouchableOpacity,
   TextInput,
+  Platform,
+  KeyboardAvoidingView,
 } from "react-native";
 import * as Linking from "expo-linking";
 import { MaterialIcons, Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useVideoPlayer, VideoView } from "expo-video";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function NewPostScreen() {
   const [facing, setFacing] = useState<CameraType>("back");
@@ -144,6 +147,7 @@ export default function NewPostScreen() {
 
   const renderRecorderVideo = () => {
     return (
+      // <SafeAreaView style={{ flex: 1 }} edges={["top", "bottom"]} >
       <View style={{ flex: 1 }}>
         <Ionicons
           name="close"
@@ -161,7 +165,11 @@ export default function NewPostScreen() {
           />
         </View>
 
-        <View style={styles.descriptionContainer}>
+        <KeyboardAvoidingView
+          style={styles.descriptionContainer}
+          behavior={Platform.OS === "ios" ? "padding" : undefined}
+          keyboardVerticalOffset={20}
+        >
           <TextInput
             style={styles.input}
             placeholder="Add a description..."
@@ -173,7 +181,7 @@ export default function NewPostScreen() {
           <TouchableOpacity style={styles.postButton} onPress={postVideo}>
             <Text style={styles.postText}>Post</Text>
           </TouchableOpacity>
-        </View>
+        </KeyboardAvoidingView>
       </View>
     );
   };
