@@ -70,7 +70,11 @@ export default function PostListItem({ postItem, isActive }: VideoItemProps) {
           flex: 1,
         }}
         player={player}
-        allowsFullscreen={false}
+        fullscreenOptions={{
+          enable: true, //能否全屏
+          orientation: "landscape", //全屏时屏幕方向
+          autoExitOnRotate: false, //屏幕旋转时是否退出全屏
+        }}
         allowsPictureInPicture={false}
         contentFit="cover"
         nativeControls={true}

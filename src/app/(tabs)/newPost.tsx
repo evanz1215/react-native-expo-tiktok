@@ -28,9 +28,12 @@ export default function NewPostScreen() {
   const [permission, requestPermission] = useCameraPermissions();
   const [micPermission, requestMicPermission] = useMicrophonePermissions();
 
-  const videoPlayer = useVideoPlayer(null, (player) => {
-    player.loop = true;
-  });
+  const videoPlayer = useVideoPlayer(
+    "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4",
+    (player) => {
+      player.loop = true;
+    }
+  );
 
   useEffect(() => {
     (async () => {
@@ -76,6 +79,8 @@ export default function NewPostScreen() {
 
   const dismissVideo = () => {};
 
+  const postVideo = () => {};
+
   const stopRecording = () => {
     setIsRecording(false);
     cameraRef.current?.stopRecording();
@@ -86,7 +91,11 @@ export default function NewPostScreen() {
     const recordedVideo = await cameraRef.current?.recordAsync();
 
     if (recordedVideo?.uri) {
-      console.log(recordedVideo.uri);
+      const uri = recordedVideo.uri;
+      console.log(uri);
+      setVideo(uri);
+      await videoPlayer.replaceAsync({ uri });
+      videoPlayer.play();
     }
   };
 
@@ -96,7 +105,7 @@ export default function NewPostScreen() {
         <CameraView
           mode="video"
           ref={cameraRef}
-          style={styles.camera}
+          style={{ flex: 1 }}
           facing={facing}
         />
         <View style={styles.tobBar}>
@@ -144,29 +153,33 @@ export default function NewPostScreen() {
           style={styles.closeIcon}
         />
 
-        <View>
+        <View style={styles.videoWrapper}>
           <VideoView
             player={videoPlayer}
             contentFit="cover"
             style={styles.video}
           />
         </View>
-        <TextInput
-          style={styles.input}
-          placeholder="Add a description..."
-          placeholderTextColor="#888"
-          multiline
-          value={description}
-          onChangeText={setDescription}
-        />
-        <TouchableOpacity>
-          <Text style={styles.postText}>Post</Text>
-        </TouchableOpacity>
+
+        <View style={styles.descriptionContainer}>
+          <TextInput
+            style={styles.input}
+            placeholder="Add a description..."
+            placeholderTextColor="#888"
+            multiline
+            value={description}
+            onChangeText={setDescription}
+          />
+          <TouchableOpacity style={styles.postButton} onPress={postVideo}>
+            <Text style={styles.postText}>Post</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     );
   };
 
-  return <>{video ? renderRecorderVideo() : renderCamera()}</>;
+  // return <>{video ? renderRecorderVideo() : renderCamera()}</>;
+  return <>{renderRecorderVideo()}</>;
 }
 
 const styles = StyleSheet.create({
@@ -181,9 +194,6 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: "700",
   },
-  camera: {
-    flex: 1,
-  },
   recordButton: {
     width: 80,
     height: 80,
@@ -195,8 +205,8 @@ const styles = StyleSheet.create({
   },
   tobBar: {
     position: "absolute",
-    top: 50,
-    left: 10,
+    top: 55,
+    left: 15,
   },
   bottomControls: {
     position: "absolute",
@@ -206,8 +216,42 @@ const styles = StyleSheet.create({
     justifyContent: "space-around",
     width: "100%",
   },
-  closeIcon: {},
-  video: {},
-  input: {},
-  postText: {},
+  closeIcon: {
+    position: "absolute",
+    top: 50,
+    left: 20,
+    zIndex: 1,
+  },
+  video: {
+    aspectRatio: 9 / 16,
+  },
+  input: {
+    flex: 1,
+    color: "white",
+    backgroundColor: "#111",
+    borderRadius: 10,
+    paddingVertical: 15,
+    paddingHorizontal: 10,
+    maxHeight: 110,
+  },
+  postText: {
+    color: "#fff",
+    fontSize: 17,
+    fontWeight: "700",
+  },
+  postButton: {
+    backgroundColor: "#FF0050",
+    paddingHorizontal: 15,
+    paddingVertical: 10,
+    borderRadius: 10,
+  },
+  videoWrapper: {
+    flex: 1,
+  },
+  descriptionContainer: {
+    paddingHorizontal: 5,
+    flexDirection: "row",
+    gap: 10,
+    marginBottom: 15,
+  },
 });
