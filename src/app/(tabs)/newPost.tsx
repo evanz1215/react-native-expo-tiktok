@@ -20,6 +20,7 @@ import { MaterialIcons, Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useVideoPlayer, VideoView } from "expo-video";
 import { SafeAreaView } from "react-native-safe-area-context";
+import * as ImagePicker from "expo-image-picker";
 
 export default function NewPostScreen() {
   const [facing, setFacing] = useState<CameraType>("back");
@@ -31,12 +32,9 @@ export default function NewPostScreen() {
   const [permission, requestPermission] = useCameraPermissions();
   const [micPermission, requestMicPermission] = useMicrophonePermissions();
 
-  const videoPlayer = useVideoPlayer(
-    "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4",
-    (player) => {
-      player.loop = true;
-    }
-  );
+  const videoPlayer = useVideoPlayer(null, (player) => {
+    player.loop = true;
+  });
 
   useEffect(() => {
     (async () => {
@@ -78,9 +76,27 @@ export default function NewPostScreen() {
   const toggleCamera = () =>
     setFacing((current) => (current === "back" ? "front" : "back"));
 
-  const selectFromGallery = () => {};
+  const selectFromGallery = async () => {
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ["videos"],
+      allowsEditing: true,
+      aspect: [9, 16],
+    });
 
-  const dismissVideo = () => {};
+    console.log(result);
+
+    if (!result.canceled) {
+      const uri = result.assets[0].uri;
+      setVideo(uri);
+      await videoPlayer.replaceAsync({ uri });
+      videoPlayer.play();
+    }
+  };
+
+  const dismissVideo = () => {
+    setVideo(undefined);
+    videoPlayer.release();
+  };
 
   const postVideo = () => {};
 
@@ -186,8 +202,8 @@ export default function NewPostScreen() {
     );
   };
 
-  // return <>{video ? renderRecorderVideo() : renderCamera()}</>;
-  return <>{renderRecorderVideo()}</>;
+  return <>{video ? renderRecorderVideo() : renderCamera()}</>;
+  // return <>{renderRecorderVideo()}</>;
 }
 
 const styles = StyleSheet.create({
