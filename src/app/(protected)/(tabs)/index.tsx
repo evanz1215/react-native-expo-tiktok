@@ -26,7 +26,7 @@ export default function HomeScreen() {
   const tabBarHeight = useBottomTabBarHeight();
   const containerHeight = height - tabBarHeight - (insets.bottom || 0);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [activeTab, setActiveTab] = useState(TABS.FOR_YOU);
+  const [activeTab, setActiveTab] = useState<string>(TABS.FOR_YOU);
   const onViewableItemChanged = useRef(
     ({ viewableItems }: { viewableItems: ViewToken[] }) => {
       if (viewableItems.length > 0) {
