@@ -4,7 +4,7 @@ import { PostInput } from "@/types/types";
 type StorageInput = {
   fileName: string;
   fileExtension: string;
-  fileBuffer: ArrayBuffer;
+  fileBuffer: Uint8Array;
 };
 
 export const fetchPosts = async () => {

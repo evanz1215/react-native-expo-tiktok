@@ -14,6 +14,7 @@ import {
   TextInput,
   Platform,
   KeyboardAvoidingView,
+  Alert,
 } from "react-native";
 import * as Linking from "expo-linking";
 import { MaterialIcons, Ionicons } from "@expo/vector-icons";
@@ -21,6 +22,10 @@ import { router } from "expo-router";
 import { useVideoPlayer, VideoView } from "expo-video";
 import { SafeAreaView } from "react-native-safe-area-context";
 import * as ImagePicker from "expo-image-picker";
+import { useMutation } from "@tanstack/react-query";
+import { useAuthStore } from "@/stores/useAuthStore";
+import * as FileSystem from "expo-file-system";
+import { createPost, uploadVideoToStorage } from "@/services/posts";
 
 export default function NewPostScreen() {
   const [facing, setFacing] = useState<CameraType>("back");
@@ -31,9 +36,49 @@ export default function NewPostScreen() {
   const cameraRef = useRef<CameraView>(null);
   const [permission, requestPermission] = useCameraPermissions();
   const [micPermission, requestMicPermission] = useMicrophonePermissions();
+  const user = useAuthStore((state) => state.user);
 
   const videoPlayer = useVideoPlayer(null, (player) => {
     player.loop = true;
+  });
+
+  const { mutate: createNewPost, isPending } = useMutation({
+    mutationFn: async ({
+      video,
+      description,
+    }: {
+      video: string;
+      description: string;
+    }) => {
+      const fileExtension = video.split(".").pop() || "mp4";
+      const fileName = `${user?.id}/${Date.now()}.${fileExtension}`;
+
+      const file = new FileSystem.File(video);
+      const fileBuffer = await file.bytes();
+
+      if (user) {
+        const videoUrl = await uploadVideoToStorage({
+          fileName,
+          fileExtension,
+          fileBuffer,
+        });
+
+        await createPost({
+          video_url: videoUrl,
+          description,
+          user_id: user?.id,
+        });
+      }
+    },
+    onSuccess: () => {
+      videoPlayer.release();
+      setDescription("");
+      setVideo("");
+      router.replace("/");
+    },
+    onError: () => {
+      Alert.alert("Error", "Failed to create post. Please try again.");
+    },
   });
 
   useEffect(() => {
@@ -98,7 +143,14 @@ export default function NewPostScreen() {
     videoPlayer.release();
   };
 
-  const postVideo = () => {};
+  const postVideo = () => {
+    if (!video) {
+      Alert.alert("No video", "Please record or select a video to post.");
+      return;
+    }
+
+    createNewPost({ video, description });
+  };
 
   const stopRecording = () => {
     setIsRecording(false);
