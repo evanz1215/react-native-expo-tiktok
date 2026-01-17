@@ -1,18 +1,20 @@
-import PostListItem from "@/components/PostListItem";
-import {
-  View,
-  FlatList,
-  Dimensions,
-  ViewToken,
-  Text,
-  StyleSheet,
-} from "react-native";
-import posts from "@assets/data/posts.json";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
-import { useRef, useState } from "react";
-import { MaterialIcons, Ionicons } from "@expo/vector-icons";
 import FeedTab from "@/components/GenericComponents/FeedTab";
+import PostListItem from "@/components/PostListItem";
+import { fetchPosts } from "@/services/posts";
+import { Ionicons, MaterialIcons } from "@expo/vector-icons";
+import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
+import { useQuery } from "@tanstack/react-query";
+import { useRef, useState } from "react";
+import {
+  ActivityIndicator,
+  Dimensions,
+  FlatList,
+  StyleSheet,
+  Text,
+  View,
+  ViewToken,
+} from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const TABS = {
   EXPLORER: "Explorer",
@@ -27,6 +29,12 @@ export default function HomeScreen() {
   const containerHeight = height - tabBarHeight - (insets.bottom || 0);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [activeTab, setActiveTab] = useState<string>(TABS.FOR_YOU);
+
+  const { data, isLoading, error } = useQuery({
+    queryKey: ["posts"],
+    queryFn: fetchPosts,
+  });
+
   const onViewableItemChanged = useRef(
     ({ viewableItems }: { viewableItems: ViewToken[] }) => {
       if (viewableItems.length > 0) {
@@ -35,8 +43,35 @@ export default function HomeScreen() {
     }
   );
 
-  console.log("tabBarHeight:", tabBarHeight);
-  console.log("currentIndex:", currentIndex);
+  if (isLoading) {
+    return (
+      <ActivityIndicator
+        size="large"
+        style={{ flex: 1, justifyContent: "center" }}
+      />
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={{ flex: 1, justifyContent: "center" }}>
+        <Text
+          style={{
+            color: "#fff",
+            fontWeight: "bold",
+            textAlign: "center",
+            fontSize: 18,
+          }}
+        >
+          Error Occurred While Fetching The Posts.
+        </Text>
+      </View>
+    );
+  }
+
+  // console.log("tabBarHeight:", tabBarHeight);
+  // console.log("currentIndex:", currentIndex);
+  // console.log("data", JSON.stringify(data));
 
   return (
     <View style={{ height: containerHeight }}>
@@ -63,7 +98,7 @@ export default function HomeScreen() {
       </View>
 
       <FlatList
-        data={posts}
+        data={data || []}
         renderItem={({ item, index }) => (
           <PostListItem
             key={item.id}
