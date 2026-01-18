@@ -7,12 +7,32 @@ type StorageInput = {
   fileBuffer: Uint8Array;
 };
 
-export const fetchPosts = async () => {
-  const { data } = await supabase
+type PaginationParams = {
+  cursor?: string;
+  limit?: number;
+};
+
+export const fetchPosts = async (pageParams: PaginationParams) => {
+  //   const { data } = await supabase
+  //     .from("posts")
+  //     .select("*, user:profiles(*), nrOfComments:comments(count)")
+  //     .order("created_at", { ascending: false })
+  //     .throwOnError();
+
+  let query = supabase
     .from("posts")
     .select("*, user:profiles(*), nrOfComments:comments(count)")
-    .order("created_at", { ascending: true })
-    .throwOnError();
+    .order("id", { ascending: false });
+
+  if (pageParams.limit) {
+    query = query.limit(pageParams.limit);
+  }
+
+  if (pageParams.cursor) {
+    query = query.lt("id", pageParams.cursor);
+  }
+
+  const { data } = await query.throwOnError();
 
   return data;
 };

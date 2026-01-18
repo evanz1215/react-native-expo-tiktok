@@ -22,7 +22,7 @@ import { router } from "expo-router";
 import { useVideoPlayer, VideoView } from "expo-video";
 import { SafeAreaView } from "react-native-safe-area-context";
 import * as ImagePicker from "expo-image-picker";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuthStore } from "@/stores/useAuthStore";
 import * as FileSystem from "expo-file-system";
 import { createPost, uploadVideoToStorage } from "@/services/posts";
@@ -34,6 +34,7 @@ export default function NewPostScreen() {
   const [description, setDescription] = useState<string>("");
 
   const cameraRef = useRef<CameraView>(null);
+  const queryClient = useQueryClient();
   const [permission, requestPermission] = useCameraPermissions();
   const [micPermission, requestMicPermission] = useMicrophonePermissions();
   const user = useAuthStore((state) => state.user);
@@ -71,6 +72,7 @@ export default function NewPostScreen() {
       }
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["posts"] });
       videoPlayer.release();
       setDescription("");
       setVideo("");

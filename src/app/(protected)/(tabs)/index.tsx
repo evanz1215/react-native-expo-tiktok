@@ -3,8 +3,8 @@ import PostListItem from "@/components/PostListItem";
 import { fetchPosts } from "@/services/posts";
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
-import { useQuery } from "@tanstack/react-query";
-import { useRef, useState } from "react";
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
+import { useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Dimensions,
@@ -30,10 +30,33 @@ export default function HomeScreen() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [activeTab, setActiveTab] = useState<string>(TABS.FOR_YOU);
 
-  const { data, isLoading, error } = useQuery({
+  const {
+    data,
+    isLoading,
+    error,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useInfiniteQuery({
     queryKey: ["posts"],
-    queryFn: fetchPosts,
+    queryFn: ({ pageParam }) => fetchPosts(pageParam),
+    initialPageParam: {
+      limit: 3,
+      cursor: undefined,
+    },
+    getNextPageParam: (lastPage, allPages) => {
+      if (lastPage.length === 0) {
+        return undefined;
+      }
+
+      return {
+        limit: 3,
+        cursor: lastPage[lastPage.length - 1].id,
+      };
+    },
   });
+
+  const posts = useMemo(() => data?.pages.flat() || [], [data]);
 
   const onViewableItemChanged = useRef(
     ({ viewableItems }: { viewableItems: ViewToken[] }) => {
@@ -98,7 +121,7 @@ export default function HomeScreen() {
       </View>
 
       <FlatList
-        data={data || []}
+        data={posts}
         renderItem={({ item, index }) => (
           <PostListItem
             key={item.id}
@@ -111,6 +134,10 @@ export default function HomeScreen() {
         decelerationRate={"fast"}
         disableIntervalMomentum={true}
         onViewableItemsChanged={onViewableItemChanged.current}
+        onEndReached={() =>
+          !isFetchingNextPage && hasNextPage && fetchNextPage()
+        }
+        onEndReachedThreshold={2}
       />
     </View>
   );
